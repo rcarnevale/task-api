@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Logger, Param, ParseIntPipe, Patch, Post, Query, UseGuards, UsePipes, ValidationPipe } from '@nestjs/common';
 import { TasksService } from './tasks.service';
 import { CreateTaskDTO } from './dto/create-task.dto';
 import { GetTaskFilterDTO } from './dto/get-tasks-filter.dto';
@@ -13,23 +13,26 @@ import { User } from '../auth/user.entity';
 @UseGuards(AuthGuard())
 export class TasksController {
 
+    private logger = new Logger('TasksController');
+
     constructor(
         private taskssService: TasksService
-    ){}
+    ) { }
 
     @Get()
     getTasks(
-        @Query(ValidationPipe) filter: GetTaskFilterDTO, 
+        @Query(ValidationPipe) filter: GetTaskFilterDTO,
         @GetUser() user: User
-        ): Promise<Task[]>{
+    ): Promise<Task[]> {
+        this.logger.verbose(`User ${user.username} retrieving all tasks. Filters: ${JSON.stringify(filter)}`);
         return this.taskssService.getTasks(filter, user);
     }
 
     @Get('/:id')
     getTaskById(
-        @Param('id', ParseIntPipe) id:number,
+        @Param('id', ParseIntPipe) id: number,
         @GetUser() user: User
-        ): Promise<Task>{
+    ): Promise<Task> {
         return this.taskssService.getTaskById(id, user);
     }
 
@@ -38,7 +41,8 @@ export class TasksController {
     createTask(
         @Body() createTaskDTO: CreateTaskDTO,
         @GetUser() user: User
-        ): Promise<Task> {
+    ): Promise<Task> {
+        this.logger.verbose(`User ${user.username} creating a new task. Data: ${JSON.stringify(createTaskDTO)}`);
         return this.taskssService.createTask(createTaskDTO, user);
     }
 
@@ -46,16 +50,16 @@ export class TasksController {
     deleteTask(
         @Param('id', ParseIntPipe) id: number,
         @GetUser() user: User
-        ): Promise<void>{
+    ): Promise<void> {
         return this.taskssService.deleteTask(id, user);
     }
 
     @Patch('/:id/status')
     patchStatus(
-        @Param('id', ParseIntPipe) id:number, 
+        @Param('id', ParseIntPipe) id: number,
         @Body('status', TaskStatusValidatorPipe) status: TaskStatus,
         @GetUser() user: User
-        ): Promise<Task>{
+    ): Promise<Task> {
         return this.taskssService.updateTaskStatus(id, status, user);
     }
 
